@@ -14,7 +14,11 @@ See [`docs/agent-workflow.md`](docs/agent-workflow.md) for the full design and
 ```
 agent-workflow.config.sh        # ← per-project parameters (the ONE file you must edit)
 install.sh                      # symlinks .agents/skills/* into .claude/skills/*
-dev.sh                          # optional: parameterized devcontainer launcher
+dev.sh                          # optional: parameterized sandbox-container launcher
+.devcontainer/                  # optional: minimal generic image + egress firewall
+  Dockerfile                    #   extend with your toolchain
+  init-firewall.sh              #   default-deny egress + FIREWALL_EXTRA_DOMAINS allowlist
+  README.md                     #   what to change per project
 docs/
   agent-workflow.md             # design doc (project-agnostic)
   agent-workflow.puml           # diagram
@@ -39,6 +43,7 @@ docs/
    cp -r agent-workflow-bundle/docs/agent-workflow.* <target>/docs/
    # optional, only if you want the sandboxed container runner:
    cp    agent-workflow-bundle/dev.sh               <target>/
+   cp -r agent-workflow-bundle/.devcontainer        <target>/.devcontainer   # then extend the Dockerfile
    ```
 2. Edit `agent-workflow.config.sh` — set your dir names, build/test commands, and the
    role → skill name mapping (see [`ADAPTING.md`](ADAPTING.md)).

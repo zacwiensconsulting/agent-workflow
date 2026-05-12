@@ -5,11 +5,11 @@
 # `bypassPermissions` (no permission prompts) safely, behind a firewall.
 #
 # It expects a `.devcontainer/` directory in the repo with:
-#   - Dockerfile          (your base image: node, your toolchain, sudo, etc.)
+#   - Dockerfile          (base image: node, your toolchain, sudo, etc.)
 #   - init-firewall.sh     (run as root at container start; allowlist outbound)
-# Those are intentionally NOT shipped in this bundle — they're too stack-specific.
-# Bring your own (the smc repo's are a reasonable starting point) and add any
-# extra hosts your build needs via FIREWALL_EXTRA_DOMAINS in the config.
+# The bundle ships a minimal generic version of both — extend the Dockerfile with
+# your toolchain and add any extra hosts your build needs via FIREWALL_EXTRA_DOMAINS
+# in agent-workflow.config.sh. See .devcontainer/README.md.
 #
 # Reads agent-workflow.config.sh for: DEVCONTAINER_IMAGE_NAME, BACKEND_DIR,
 # FRONTEND_DIR, FRONTEND_INSTALL_CMD, FIREWALL_EXTRA_DOMAINS.

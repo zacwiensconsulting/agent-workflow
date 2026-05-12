@@ -78,9 +78,38 @@ reuse `implement-fe`-style flow) — see Step 4.
 - No browser e2e → set `E2E_TEST_CMD=""` or delete `.agents/skills/test-e2e/`.
 - Backend-only or frontend-only project → set the unused `*_DIR` to `""`; the
   orchestrators skip that implement step.
-- No `dev.sh` / devcontainer → don't copy `dev.sh`; the orchestrators fall back
-  to `git checkout -b` instead of `EnterWorktree` (see each orchestrator's
-  "Fallback" section).
+- No `dev.sh` / devcontainer → don't copy `dev.sh` or `.devcontainer/`; the
+  orchestrators detect they aren't in a bypass-permissions sandbox and emit a
+  manual runbook instead of launching agents (and `EnterWorktree` falls back to
+  `git checkout -b`) — see each orchestrator's "Fallback" section.
+
+## Step 3.5 — The devcontainer (optional but recommended)
+
+The bundle ships a **minimal generic** `.devcontainer/` (`Dockerfile`,
+`init-firewall.sh`, `README.md`) plus `dev.sh`. It exists so orchestrators can
+launch sub-agents with `--dangerously-skip-permissions` behind a firewall.
+Without it everything still works via the manual-runbook fallback — it's a
+convenience/safety layer, not load-bearing.
+
+If you adopt it, change these:
+
+- **`agent-workflow.config.sh` → `FIREWALL_EXTRA_DOMAINS`** — every host your
+  build/test/deploy tooling reaches. A build failing behind the firewall is
+  almost always a missing host here. (Firebase: `firebase.googleapis.com
+  firestore.googleapis.com identitytoolkit.googleapis.com www.gstatic.com
+  storage.googleapis.com`. Maven/Gradle: `repo.maven.apache.org
+  plugins.gradle.org services.gradle.org`. PyPI: `pypi.org files.pythonhosted.org`.)
+- **`.devcontainer/Dockerfile` → the "ADD YOUR PROJECT TOOLCHAIN" block** —
+  install your runtime/CLIs/browsers, set `ENV` (`JAVA_HOME`, …). e.g.
+  `RUN npm install -g firebase-tools`, `RUN npx -y playwright install --with-deps chromium`.
+- **`agent-workflow.config.sh` → `DEVCONTAINER_IMAGE_NAME`** — unique per project.
+- **`dev.sh` → `run_container`** — add a `-v` mount for any large toolchain cache
+  your stack has (`~/.gradle`, `~/.m2`, `~/.cache/pip`, …). Drop the `SYS_ADMIN`
+  / `seccomp=unconfined` caps if you have no headless-browser tests.
+
+See `.devcontainer/README.md` for the full checklist. If you'd rather use your
+repo's existing devcontainer/CI image, don't copy this one — `dev.sh` only needs
+*a* `.devcontainer/Dockerfile` + `init-firewall.sh` to exist.
 
 ## Step 4 — Adding a new area (e.g. mobile)
 
