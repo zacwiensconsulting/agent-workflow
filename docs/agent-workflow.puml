@@ -1,0 +1,114 @@
+@startuml Agent Workflow
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam activityBackgroundColor #E3F2FD
+skinparam activityBorderColor #1976D2
+skinparam activityDiamondBackgroundColor #FFF3E0
+skinparam activityDiamondBorderColor #F57C00
+skinparam arrowColor #424242
+
+title Agent Workflow
+
+|User|
+start
+:Run /bugfix, /feature,\n/enhancement, or /troubleshoot;
+
+|Orchestrator|
+:Fetch ticket\n($ISSUE_FETCH_CMD);
+:Classify areas\n(backend / frontend / ...);
+:Create worktree\n(EnterWorktree);
+:Rename branch\n(<prefix>/<TICKET>-<n>-<slug>);
+:Create ticket file\n$TICKET_DIR/<TICKET>-<n>-<slug>.md;
+
+|Explore Agent|
+#E8F5E9:Read ticket + arch/domain docs + codebase\nMap affected files\nDocument findings;
+:Update ticket\n## Exploration;
+:Commit;
+
+|Plan Agent|
+#E8F5E9:Design implementation\nIdentify tests\nWrite plan;
+:Update ticket\n## Plan;
+:Commit;
+
+|Orchestrator|
+:Present plan to user;
+
+|User|
+if (Approve plan?) then (yes)
+else (no)
+  :Provide feedback;
+  |Plan Agent|
+  #FFF3E0:Re-plan with feedback;
+  |User|
+endif
+
+|Orchestrator|
+if (Backend work?) then (yes)
+  |Implement-BE Agent|
+  #E8F5E9:TDD: Red-Green-Refactor\nFollow $BACKEND_REFERENCE_SKILL\n($BACKEND_TEST_CMD);
+  :Update ticket\n## Implementation;
+  :Commit;
+else (no)
+endif
+
+|Orchestrator|
+if (Frontend work?) then (yes)
+  |Implement-FE Agent|
+  #E8F5E9:TDD: Red-Green-Refactor\nFollow $FRONTEND_REFERENCE_SKILL\n($FRONTEND_TEST_CMD);
+  :Update ticket\n## Implementation;
+  :Commit;
+else (no)
+endif
+
+|Orchestrator|
+if (INTEGRATION_TEST_CMD set & relevant?) then (yes)
+  |Test-Integration Agent|
+  #E8F5E9:Write integration tests\n($INTEGRATION_TEST_CMD);
+  :Update ticket;
+  :Commit;
+else (no)
+endif
+
+|Orchestrator|
+if (Feature workflow & frontend & E2E_TEST_CMD set?) then (yes)
+  |Test-E2E Agent|
+  #E8F5E9:Write Playwright tests\n($E2E_TEST_CMD);
+  :Copy videos to $E2E_VIDEOS_DIR;
+  :Copy screenshots to $E2E_SCREENSHOTS_DIR;
+  :Update ticket;
+  :Commit;
+else (no)
+endif
+
+|Orchestrator|
+if (Feature workflow & design specs exist?) then (yes)
+  |Test-Visual Agent|
+  #E1BEE7:Read design specs\n(issue attachments or $DESIGNS_DIR);
+  :Read e2e screenshots;
+  :Compare layout, colors,\ntypography, components;
+  if (Discrepancies found?) then (yes)
+    :Document findings;
+    |User|
+    if (Fix issues?) then (yes)
+      |Implement-FE Agent|
+      #FFF3E0:Fix visual issues;
+      |Orchestrator|
+    else (no)
+    endif
+  else (no)
+    :Visual review passed;
+  endif
+else (no)
+endif
+
+|Review Agent|
+#E8F5E9:Run full test suite\nSelf-review diff\n(+ checklist from $BACKEND_REFERENCE_SKILL);
+:Update ticket\n## Review;
+:git push;
+:gh pr create;
+
+|Orchestrator|
+:ExitWorktree (keep);
+:Display PR URL + cleanup command;
+stop
+@enduml
